@@ -1,0 +1,51 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main  # Runs when code is pushed to the main branch
+  pull_request:
+    branches:
+      - main  # Runs on pull requests to main branch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'  # Use the latest Temurin JDK
+          java-version: '17'
+
+      - name: Build project
+        run: mvn clean package  # Modify if using Gradle
+
+  test:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run tests
+        run: mvn test  # Modify if using another test framework
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: test
+    if: success()
+    steps:
+      - name: Deploy to Staging
+        run: echo "Deploying application to staging environment..."
+  
+  notify:
+    runs-on: ubuntu-latest
+    needs: [build, test, deploy]
+    if: failure()
+    steps:
+      - name: Send failure notification
+        run: echo "Build or deployment failed! Notify the team."
